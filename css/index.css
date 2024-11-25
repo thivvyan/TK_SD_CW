@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600&display=swap');
+.d-flex.justify-content-between { 
+   margin-top: 20px; 
+}
+.fs-5{
+   margin-top: 10px;
+}
+.carousel-item .card-img-top .active .img {
+   max-height: 600px;
+
+}
+#carouselExample .carousel-item img {  
+   object-fit: cover;
+   object-position: center;
+   overflow: hidden;
+   height:50vh;
+   margin-left: auto;
+   margin-right: auto;
+}
+
+.fixed-card-height {
+   height: 300px; /* Adjust height as needed */
+   display: flex;
+   flex-direction: column;
+   justify-content: space-between;
+}
+
+.card-img-top {
+   height: 150px; /* Adjust image height to fit inside the card */
+   object-fit: contain; /* Ensures the image fills the area without distortion */
+}
+
+.card-body {
+   display: flex;
+   flex-direction: column;
+}
+
+
