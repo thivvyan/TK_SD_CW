@@ -85,19 +85,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
   $address = mysqli_real_escape_string($conn, $address);
   $contact = stripslashes($_POST['contactNumber']);
   $contact = mysqli_real_escape_string($conn, $contact);
+  $age = stripslashes($_POST['age']);
+  $age = mysqli_real_escape_string($conn, $age);
   $email = stripslashes($_POST['username']);
   $email = mysqli_real_escape_string($conn, $email);
   $password = stripslashes($_POST['password']);
   $password = mysqli_real_escape_string($conn, $password);
 
+  $image = $_FILES['image']['name'];
+  $image_tmp_name = $_FILES['image']['tmp_name'];
+  $image_folder = 'uploaded_img/' . $image;
+
   // Insert into database
-  $query = "INSERT INTO `customers` (name, address, contactNumber, username, password) 
-            VALUES ('$firstname', '$address', '$contact', '$email', '" . md5($password) . "')";
+  $query = "INSERT INTO `customers` (name, address, contactNumber, username, password, age, image) 
+            VALUES ('$firstname', '$address', '$contact', '$email', '" . md5($password) . "', '$age', '$image')";
 
   $result = mysqli_query($conn, $query);
 
   if ($result) {
-    header('location:cart.php');
+    move_uploaded_file($image_tmp_name, $image_folder);
+    header('location:index.php');
   } else {
     echo "<div class='form'>
               <h3>Registration failed. Please try again.</h3><br/>
@@ -186,7 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
   <!-- Signup Button Form -->
   <div class="modal" id="signupForm">
-    <form method="post" class="form-container" name="register">
+    <form method="post" class="form-container" name="register" enctype="multipart/form-data">
       <h1>Sign up</h1>
 
       <label for="name"><b>Name</b></label>
@@ -200,6 +207,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['register'])) {
 
       <label for="username"><b>Email</b></label>
       <input type="email" placeholder="Enter Email" name="username" required>
+
+      <label for="age"><b>Age</b></label>
+      <input type="number" placeholder="Enter Age" name="age" required>
+
+      <label for="image"><b>Profile Image</b></label>
+      <input type="file" name="image" accept="image/png, image/jpg, image/jpeg" required>
 
       <label for="password"><b>New Password</b></label>
       <input type="password" placeholder="Enter Password" name="password" id="password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"

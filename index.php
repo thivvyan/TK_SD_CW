@@ -90,6 +90,39 @@ if (isset($_POST['add_to_cart'])) {
         if (mysqli_num_rows($select_products) > 0) {
           while ($product = mysqli_fetch_assoc($select_products)) {
 
+            // Query to count seats grouped by is_table
+            $query = "SELECT 
+                        is_table, 
+                        SUM(seatcount) as total_seats,
+                        price 
+                      FROM `seat` 
+                      WHERE productid = '{$product['product_id']}' 
+                      GROUP BY is_table";
+
+            $result = mysqli_query($conn, $query);
+
+            // Initialize variables to hold the counts
+            $tableSeats = 0;
+            $noTableSeats = 0;
+            $tableSeatPrice = 0.00;
+            $tableSeatPriceKid = 0.00;
+            $noTableSeatPrice = 0.00;
+            $noTableSeatPriceKid = 0.00;
+
+            if ($result && mysqli_num_rows($result) > 0) {
+              while ($row = mysqli_fetch_assoc($result)) {
+                if ($row['is_table']) {
+                  $tableSeats = $row['total_seats'];
+                  $tableSeatPrice = $row['price'];
+                  $tableSeatPriceKid = $tableSeatPrice / 2;
+                } else {
+                  $noTableSeats = $row['total_seats'];
+                  $noTableSeatPrice = $row['price'];
+                  $noTableSeatPriceKid = $noTableSeatPrice / 2;
+                }
+              }
+            }
+
             $itemName = $product['name'];
             $item = mysqli_query($conn, "SELECT * FROM `shopping_cart` WHERE name = '$itemName'");
 
@@ -104,8 +137,17 @@ if (isset($_POST['add_to_cart'])) {
                 <img src="uploaded_img/<?php echo $product['image']; ?>" alt="" class="card-img-top" style="height:300px">
                 <div class="card-body">
                   <h5 class="card-title"><?php echo htmlspecialchars($product['name']); ?></h5>
-                  <p class="card-text">$<?php echo htmlspecialchars($product['price']); ?></p>
-                  <button type="button" class="btn btn-primary mt-auto" onclick="addToCartClicked('<?php echo $product['name']; ?>', '<?php echo $product['price']; ?>', '<?php echo $product['image']; ?>', '<?php echo $isLoggedIn; ?>')"><?php echo ($itemAddedToCart == true) ? 'Added to cart' : 'Add to cart'; ?></button>
+
+                  <p class="card-text">Table Seats Price: (Adult) $<?php echo htmlspecialchars($tableSeatPrice); ?> | (Kid) $<?php echo htmlspecialchars($tableSeatPriceKid); ?></p>
+                  <p class="card-text">Normal Seats Price: (Adult) $<?php echo htmlspecialchars($noTableSeatPrice); ?> | (Kid) $<?php echo htmlspecialchars($noTableSeatPriceKid); ?></p>
+
+                  <button type="button" class="btn btn-primary mt-auto" onclick="addToCartClicked(
+                  '<?php echo $product['name']; ?>', 
+                  '<?php echo $product['image']; ?>', 
+                  '<?php echo $isLoggedIn; ?>', 
+                  '<?php echo $tableSeats; ?>', 
+                  '<?php echo $noTableSeats; ?>'
+                  )">Select Seats</button>
                 </div>
               </div>
             </div>
@@ -118,16 +160,56 @@ if (isset($_POST['add_to_cart'])) {
       </div>
     </div>
 
+    <!-- Selection Form -->
+    <div class="selection-modal" id="eventForm">
+      <form class="form-container">
+        <label for="seat_type">Select Seat Type:</label>
+        <select name="seat_type" id="seat_type" required>
+          <option value="" disabled selected>Select a seat type</option>
+          <option value="table">Table Seat</option>
+          <option value="non_table">Non-Table Seat</option>
+        </select>
+        <table>
+          <tbody>
+            <tr>
+              <td><label for="quantity-adult">Adults:</label></td>
+              <td><input type="number" id="quantity-adult" name="quantity-adult" min="1" required></td>
+            </tr>
+            <tr>
+            <td><label for="quantity-kid">Kids:</label></td>
+            <td><input type="number" id="quantity-kid" name="quantity-kid" min="1" required></td>
+            </tr>
+          </tbody>
+        </table>
+        <button type="button" class="btn" onclick="selectionClicked()">Add to Cart</button>
+        <button type="button" class="btn cancel" onclick="closeEventForm()">Close</button>
+      </form>
+    </div>
+
     <script>
-      function addToCartClicked(name, price, image, isLoggedIn) {
-        if (isLoggedIn == false){
+      function openEventForm() {
+        document.getElementById("eventForm").style.display = "flex";
+      }
+
+      function closeEventForm() {
+        document.getElementById("eventForm").style.display = "none";
+      }
+    </script>
+
+    <script>
+      function addToCartClicked(name, image, isLoggedIn, tableSeats, nonTableSeats) {
+        if (isLoggedIn == false) {
           document.getElementById("login").click();
           return;
         }
+        openEventForm();
+      }
+
+      function selectionClicked() {
         const formData = new URLSearchParams();
         formData.append('add_to_cart', true);
         formData.append('product_name', name);
-        formData.append('product_price', price);
+        // formData.append('product_price', price);
         formData.append('product_image', image);
 
         fetch('index.php', {
@@ -138,16 +220,31 @@ if (isset($_POST['add_to_cart'])) {
             body: formData.toString(),
           })
           .then(data => {
-            // if (data.success) {
-            //   buttonElement.textContent = 'Added to Cart';
-            //   buttonElement.disabled = true;
-            // } else {
-            //   alert(data.message);
-            // }
             location.reload();
           })
           .catch(error => console.error('Error:', error));
       }
+
+      function updateMaxSeats(maxTable, maxNonTable) {
+            const seatType = document.getElementById("seat_type").value;
+            const quantityInput = document.getElementById("quantity");
+
+            const availableSeats = {
+                table: maxTable,      
+                non_table: maxNonTable   
+            };
+
+            if (seatType in availableSeats) {
+                quantityInput.max = availableSeats[seatType];
+                quantityInput.value = ''; // Clear the quantity input
+                quantityInput.placeholder = `Max: ${availableSeats[seatType]}`;
+                quantityInput.disabled = false;
+            } else {
+                quantityInput.value = '';
+                quantityInput.placeholder = 'Select a seat type first';
+                quantityInput.disabled = true;
+            }
+        }
     </script>
 
 
