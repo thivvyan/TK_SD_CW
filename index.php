@@ -7,7 +7,7 @@ if (isset($_POST['add_to_cart'])) {
   $product_image = $_POST['product_image'];
   $product_quantity = 1;
 
-  echo "<script>console.log('Add to cart called');</script>";
+  echo "<script>console.log('Add to cart called with product: " . addslashes($product_name) . "');</script>";
 
   $insert_product = mysqli_query($conn, "INSERT INTO `shopping_cart`(name, price, image, quantity) VALUES('$product_name', '$product_price', '$product_image', '$product_quantity')");
 
@@ -339,7 +339,7 @@ if (isset($_POST['search_query']) && !empty(trim($_POST['search_query']))) {
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"> </script>
-    <script src="scripts.js"></script>
+    <!-- <script src="js/script.js"></script> -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script>

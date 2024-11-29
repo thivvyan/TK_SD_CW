@@ -60,7 +60,7 @@ if (isset($_POST['login_admin'])) {
 
 <!-- Header Section -->
 <div class="header">
-   <img src="images/logo1.png" alt="logo">
+   <img src="images/logo.png" alt="logo">
 </div>
 
 <!-- Main Content -->
